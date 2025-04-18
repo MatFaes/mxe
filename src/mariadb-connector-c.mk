@@ -14,6 +14,7 @@ define $(PKG)_BUILD
         -DDISABLE_STATIC=$(CMAKE_SHARED_BOOL) \
         -DWITH_EXTERNAL_ZLIB=ON \
         -DWITH_UNIT_TESTS=OFF \
+        -DWITH_CURL=OFF \
         '$(SOURCE_DIR)'
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' VERBOSE=1
     $(MAKE) -C '$(BUILD_DIR)' -j 1 VERBOSE=1 install
