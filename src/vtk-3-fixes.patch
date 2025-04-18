@@ -1,0 +1,29 @@
+Avoid to use system include dirs for cross-compile.
+
+--- a/ThirdParty/hdf5/vtk_hdf5.h.in       2025-04-18 11:37:41.963178703 +0200
++++ b/ThirdParty/hdf5/vtk_hdf5.h.in       2025-04-18 11:40:34.193749991 +0200
+@@ -18,8 +18,8 @@
+ #cmakedefine VTK_USE_SYSTEM_HDF5
+ #ifdef VTK_USE_SYSTEM_HDF5
+ #cmakedefine H5_BUILT_AS_DYNAMIC_LIB
++# include <${CMAKE_FIND_ROOT_PATH}/include/hdf5.h>
++# include <${CMAKE_FIND_ROOT_PATH}/include/hdf5_hl.h>
+-# include <hdf5.h>
+-# include <hdf5_hl.h>
+ #else
+ #cmakedefine BUILD_SHARED_LIBS
+ # ifdef BUILD_SHARED_LIBS
+
+--- a/CMake/FindHDF5.cmake        2025-04-18 15:43:34.119553209 +0200
++++ b/CMake/FindHDF5.cmake        2025-04-18 15:43:44.906531961 +0200
+@@ -9,6 +9,10 @@
+   include(${CMAKE_ROOT}/Modules/FindHDF5.cmake)
+ endif()
+ 
++if(HDF5_FOUND)
++  LIST(REMOVE_ITEM HDF5_LIBRARIES sz)
++endif()
++
+ if(HDF5_FOUND AND (HDF5_IS_PARALLEL OR HDF5_ENABLE_PARALLEL))
+   include(vtkMPI)
+   if(MPI_C_INCLUDE_PATH)

@@ -8,7 +8,7 @@ $(PKG)_SUBDIR     := VTK-$($(PKG)_VERSION)
 $(PKG)_FILE       := $($(PKG)_SUBDIR).tar.gz
 $(PKG)_URL        := https://www.vtk.org/files/release/$(call SHORT_PKG_VERSION,$(PKG))/$($(PKG)_FILE)
 $(PKG)_QT_VERSION := 5
-$(PKG)_DEPS       := cc expat freetype glew hdf5 jsoncpp libpng libxml2 lz4 qtbase qttools tiff $(BUILD)~$(PKG)
+$(PKG)_DEPS       := cc expat freetype glew hdf5 jsoncpp libpng libxml2 lz4 qtbase qttools tiff netcdf $(BUILD)~$(PKG)
 
 $(PKG)_TARGETS       := $(BUILD) $(MXE_TARGETS)
 $(PKG)_DEPS_$(BUILD) := cmake
@@ -50,7 +50,7 @@ define $(PKG)_BUILD
         -DVTK_USE_CXX11_FEATURES=ON \
         -DVTK_USE_SYSTEM_LIBRARIES=OFF \
         -DVTK_USE_SYSTEM_LIBPROJ4=OFF \
-        -DVTK_USE_SYSTEM_NETCDF=OFF \
+        -DVTK_USE_SYSTEM_NETCDF=ON \
         -DVTK_USE_SYSTEM_NETCDFCPP=OFF \
         -DVTK_USE_SYSTEM_GL2PS=OFF \
         -DVTK_USE_SYSTEM_TIFF=ON \
