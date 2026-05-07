@@ -45,7 +45,7 @@ index 1111111..2222222 100644
  # --- Extra HighGUI and VideoIO libs on Windows ---
  if(WIN32)
 -  list(APPEND HIGHGUI_LIBRARIES comctl32 gdi32 ole32 setupapi ws2_32)
-+  list(APPEND HIGHGUI_LIBRARIES -lcomctl32 -lcomdlg32 -lgdi32 -lole32 -lsetupapi -lws2_32 -lvfw32 -lstrmiids -loleaut32 -luuid)
++  list(APPEND HIGHGUI_LIBRARIES -lcomctl32 -lcomdlg32 -lgdi32 -lole32 -lsetupapi -lws2_32 -lvfw32 -loleaut32 -luuid)
  endif(WIN32)
  
  if(WITH_VA)
@@ -111,3 +111,16 @@ index 1111111..2222222 100644
                                         -Wunused-parameter -Wsign-compare
    )
  endif()
+diff --git a/modules/videoio/src/ffmpeg_codecs.hpp b/modules/videoio/src/ffmpeg_codecs.hpp
+index 1111111..2222222 100644
+--- a/modules/videoio/src/ffmpeg_codecs.hpp
++++ b/modules/videoio/src/ffmpeg_codecs.hpp
+@@ -44,6 +44,7 @@
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+ 
++#include <libavcodec/avcodec.h>
+ #if !defined(_WIN32) || defined(__MINGW32__)
+ // some versions of FFMPEG assume a C99 compiler, and don't define INT64_C
+ #include <stdint.h>

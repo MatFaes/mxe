@@ -36,6 +36,23 @@ index 1111111..2222222 100644
    _aligned_free (ptr);
  #elif defined (ANDROID)
    free (ptr);
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1111111..2222222 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -130,7 +130,11 @@ if(WIN32)
+ 
+   if(WIN32)
+     if(PCL_SHARED_LIBS)
+-      SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--export-all-symbols -Wl,--enable-auto-import")
++      if(MINGW)
++        SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--enable-auto-import")
++      else()
++        SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--export-all-symbols -Wl,--enable-auto-import")
++      endif()
+       if(MINGW)
+         add_definitions("-DBOOST_THREAD_USE_LIB")
+         SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--allow-multiple-definition")
 diff --git a/io/include/pcl/io/low_level_io.h b/io/include/pcl/io/low_level_io.h
 index 1111111..2222222 100644
 --- a/io/include/pcl/io/low_level_io.h
@@ -50,6 +67,231 @@ index 1111111..2222222 100644
  #else
  # include <unistd.h>
  # include <sys/mman.h>
+diff --git a/cmake/pcl_find_boost.cmake b/cmake/pcl_find_boost.cmake
+index 1111111..2222222 100644
+--- a/cmake/pcl_find_boost.cmake
++++ b/cmake/pcl_find_boost.cmake
+@@ -37,11 +37,11 @@ if(Boost_SERIALIZATION_FOUND)
+ endif(Boost_SERIALIZATION_FOUND)
+ 
+ # Required boost modules
+ if(WITH_OPENNI2)
+-set(BOOST_REQUIRED_MODULES filesystem thread date_time iostreams chrono system)
++set(BOOST_REQUIRED_MODULES filesystem thread date_time iostreams chrono)
+ find_package(Boost 1.47.0 REQUIRED COMPONENTS ${BOOST_REQUIRED_MODULES})
+ else()
+-set(BOOST_REQUIRED_MODULES filesystem thread date_time iostreams system)
++set(BOOST_REQUIRED_MODULES filesystem thread date_time iostreams)
+ find_package(Boost 1.40.0 REQUIRED COMPONENTS ${BOOST_REQUIRED_MODULES})
+ endif()
+ 
+diff --git a/common/include/pcl/PCLPointCloud2.h b/common/include/pcl/PCLPointCloud2.h
+index 1111111..2222222 100644
+--- a/common/include/pcl/PCLPointCloud2.h
++++ b/common/include/pcl/PCLPointCloud2.h
+@@ -8,7 +8,13 @@
+ #include <string>
+ #include <vector>
+ #include <ostream>
+-#include <boost/detail/endian.hpp>
++#include <boost/predef/other/endian.h>
++
++#if BOOST_ENDIAN_BIG_BYTE
++# define BOOST_BIG_ENDIAN
++#elif BOOST_ENDIAN_LITTLE_BYTE
++# define BOOST_LITTLE_ENDIAN
++#endif
+ 
+ // Include the correct Header path here
+ #include <pcl/PCLHeader.h>
+diff --git a/io/include/pcl/io/ply/byte_order.h b/io/include/pcl/io/ply/byte_order.h
+index 1111111..2222222 100644
+--- a/io/include/pcl/io/ply/byte_order.h
++++ b/io/include/pcl/io/ply/byte_order.h
+@@ -40,7 +40,13 @@
+ #ifndef PCL_IO_PLY_BYTE_ORDER_H
+ #define PCL_IO_PLY_BYTE_ORDER_H
+ 
+-#include <boost/detail/endian.hpp>
++#include <boost/predef/other/endian.h>
++
++#if BOOST_ENDIAN_BIG_BYTE
++# define BOOST_BIG_ENDIAN
++#elif BOOST_ENDIAN_LITTLE_BYTE
++# define BOOST_LITTLE_ENDIAN
++#endif
+ 
+ namespace pcl
+ {
+diff --git a/io/src/ascii_io.cpp b/io/src/ascii_io.cpp
+index 1111111..2222222 100644
+--- a/io/src/ascii_io.cpp
++++ b/io/src/ascii_io.cpp
+@@ -98,7 +98,7 @@ pcl::ASCIIReader::readHeader (const std::string& file_name, pcl::PCLPointCloud2
+     PCL_ERROR ("[%s] File %s does not exist.\n", name_.c_str (), file_name.c_str ());
+     return (-1);
+   }
+-  if (boost::filesystem::extension (fpath) != extension_)
++  if (fpath.extension ().string () != extension_)
+   {
+     PCL_ERROR ("[%s] File does not have %s extension. \n", name_.c_str(), extension_.c_str());
+     return -1;
+diff --git a/io/src/image_grabber.cpp b/io/src/image_grabber.cpp
+index 1111111..2222222 100644
+--- a/io/src/image_grabber.cpp
++++ b/io/src/image_grabber.cpp
+@@ -314,9 +314,9 @@ pcl::ImageGrabberBase::ImageGrabberImpl::loadDepthAndRGBFiles (const std::string
+   for (boost::filesystem::directory_iterator itr (dir); itr != end_itr; ++itr)
+   {
+ #if BOOST_FILESYSTEM_VERSION == 3
+-    extension = boost::algorithm::to_upper_copy (boost::filesystem::extension (itr->path ()));
++    extension = boost::algorithm::to_upper_copy (itr->path ().extension ().string ());
+     pathname = itr->path ().string ();
+-    basename = boost::filesystem::basename (itr->path ());
++    basename = itr->path ().stem ().string ();
+ #else
+     extension = boost::algorithm::to_upper_copy (boost::filesystem::extension (itr->leaf ()));
+     pathname = itr->path ().filename ();
+@@ -363,9 +363,9 @@ pcl::ImageGrabberBase::ImageGrabberImpl::loadDepthAndRGBFiles (const std::string
+   for (boost::filesystem::directory_iterator itr (depth_dir); itr != end_itr; ++itr)
+   {
+ #if BOOST_FILESYSTEM_VERSION == 3
+-    extension = boost::algorithm::to_upper_copy (boost::filesystem::extension (itr->path ()));
++    extension = boost::algorithm::to_upper_copy (itr->path ().extension ().string ());
+     pathname = itr->path ().string ();
+-    basename = boost::filesystem::basename (itr->path ());
++    basename = itr->path ().stem ().string ();
+ #else
+     extension = boost::algorithm::to_upper_copy (boost::filesystem::extension (itr->leaf ()));
+     pathname = itr->path ().filename ();
+@@ -384,9 +384,9 @@ pcl::ImageGrabberBase::ImageGrabberImpl::loadDepthAndRGBFiles (const std::string
+   for (boost::filesystem::directory_iterator itr (rgb_dir); itr != end_itr; ++itr)
+   {
+ #if BOOST_FILESYSTEM_VERSION == 3
+-    extension = boost::algorithm::to_upper_copy (boost::filesystem::extension (itr->path ()));
++    extension = boost::algorithm::to_upper_copy (itr->path ().extension ().string ());
+     pathname = itr->path ().string ();
+-    basename = boost::filesystem::basename (itr->path ());
++    basename = itr->path ().stem ().string ();
+ #else
+     extension = boost::algorithm::to_upper_copy (boost::filesystem::extension (itr->leaf ()));
+     pathname = itr->path ().filename ();
+@@ -431,9 +431,9 @@ pcl::ImageGrabberBase::ImageGrabberImpl::loadPCLZFFiles (const std::string &dir)
+   for (boost::filesystem::directory_iterator itr (dir); itr != end_itr; ++itr)
+   {
+ #if BOOST_FILESYSTEM_VERSION == 3
+-    extension = boost::algorithm::to_upper_copy (boost::filesystem::extension (itr->path ()));
++    extension = boost::algorithm::to_upper_copy (itr->path ().extension ().string ());
+     pathname = itr->path ().string ();
+-    basename = boost::filesystem::basename (itr->path ());
++    basename = itr->path ().stem ().string ();
+ #else
+     extension = boost::algorithm::to_upper_copy (boost::filesystem::extension (itr->leaf ()));
+     pathname = itr->path ().filename ();
+@@ -500,6 +500,6 @@ pcl::ImageGrabberBase::ImageGrabberImpl::getTimestampFromFilepath (
+   // For now, we assume the file is of the form frame_[22-char POSIX timestamp]_*
+   char timestamp_str[256];
+-  int result = std::sscanf (boost::filesystem::basename (filepath).c_str (), 
++  int result = std::sscanf (boost::filesystem::path (filepath).stem ().string ().c_str (),
+                             "frame_%22s_%*s",
+                             timestamp_str);
+   if (result > 0)
+@@ -1051,6 +1051,6 @@ pcl::ImageGrabberBase::getCurrentDepthFileName () const
+   else
+     pathname = impl_->depth_image_files_[impl_->cur_frame_];
+-  std::string basename = boost::filesystem::basename (pathname);
++  std::string basename = boost::filesystem::path (pathname).stem ().string ();
+   return (basename);
+ }
+ //////////////////////////////////////////////////////////////////////////////////////////
+@@ -1063,6 +1063,6 @@ pcl::ImageGrabberBase::getPrevDepthFileName () const
+   else
+     pathname = impl_->depth_image_files_[impl_->cur_frame_-1];
+-  std::string basename = boost::filesystem::basename (pathname);
++  std::string basename = boost::filesystem::path (pathname).stem ().string ();
+   return (basename);
+ }
+
+@@ -1076,5 +1076,5 @@ pcl::ImageGrabberBase::getDepthFileNameAtIndex (size_t idx) const
+   else
+     pathname = impl_->depth_image_files_[idx];
+-  std::string basename = boost::filesystem::basename (pathname);
++  std::string basename = boost::filesystem::path (pathname).stem ().string ();
+   return (basename);
+ }
+diff --git a/io/include/pcl/io/hdl_grabber.h b/io/include/pcl/io/hdl_grabber.h
+index 1111111..2222222 100644
+--- a/io/include/pcl/io/hdl_grabber.h
++++ b/io/include/pcl/io/hdl_grabber.h
+@@ -291,7 +291,7 @@ namespace pcl
+       boost::asio::ip::udp::endpoint udp_listener_endpoint_;
+       boost::asio::ip::address source_address_filter_;
+       uint16_t source_port_filter_;
+-      boost::asio::io_service hdl_read_socket_service_;
++      boost::asio::io_context hdl_read_socket_service_;
+       boost::asio::ip::udp::socket *hdl_read_socket_;
+       std::string pcap_file_name_;
+       boost::thread *queue_consumer_thread_;
+diff --git a/io/include/pcl/io/robot_eye_grabber.h b/io/include/pcl/io/robot_eye_grabber.h
+index 1111111..2222222 100644
+--- a/io/include/pcl/io/robot_eye_grabber.h
++++ b/io/include/pcl/io/robot_eye_grabber.h
+@@ -129,7 +129,7 @@ namespace pcl
+ 
+       boost::asio::ip::address sensor_address_;
+       boost::asio::ip::udp::endpoint sender_endpoint_;
+-      boost::asio::io_service io_service_;
++      boost::asio::io_context io_service_;
+       boost::shared_ptr<boost::asio::ip::udp::socket> socket_;
+       boost::shared_ptr<boost::thread> socket_thread_;
+       boost::shared_ptr<boost::thread> consumer_thread_;
+diff --git a/io/src/hdl_grabber.cpp b/io/src/hdl_grabber.cpp
+index 1111111..2222222 100644
+--- a/io/src/hdl_grabber.cpp
++++ b/io/src/hdl_grabber.cpp
+@@ -291,5 +291,5 @@ pcl::HDLGrabber::getDefaultNetworkAddress ()
+ {
+-  return (boost::asio::ip::address::from_string ("192.168.3.255"));
++  return (boost::asio::ip::make_address ("192.168.3.255"));
+ }
+ 
+ /////////////////////////////////////////////////////////////////////////////
+diff --git a/io/src/robot_eye_grabber.cpp b/io/src/robot_eye_grabber.cpp
+index 1111111..2222222 100644
+--- a/io/src/robot_eye_grabber.cpp
++++ b/io/src/robot_eye_grabber.cpp
+@@ -270,6 +270,6 @@ pcl::RobotEyeGrabber::socketThreadLoop ()
+ {
+   asyncSocketReceive();
+-  io_service_.reset();
++  io_service_.restart();
+   io_service_.run();
+ }
+ 
+diff --git a/io/src/vlp_grabber.cpp b/io/src/vlp_grabber.cpp
+index 1111111..2222222 100644
+--- a/io/src/vlp_grabber.cpp
++++ b/io/src/vlp_grabber.cpp
+@@ -94,5 +94,5 @@ pcl::VLPGrabber::getDefaultNetworkAddress ()
+ {
+-  return (boost::asio::ip::address::from_string ("255.255.255.255"));
++  return (boost::asio::ip::make_address ("255.255.255.255"));
+ }
+ 
+ /////////////////////////////////////////////////////////////////////////////
+diff --git a/recognition/include/pcl/recognition/face_detection/face_detector_data_provider.h b/recognition/include/pcl/recognition/face_detection/face_detector_data_provider.h
+index 1111111..2222222 100644
+--- a/recognition/include/pcl/recognition/face_detection/face_detector_data_provider.h
++++ b/recognition/include/pcl/recognition/face_detection/face_detector_data_provider.h
+@@ -11,7 +11,7 @@
+ #include "pcl/common/common.h"
+ #include "pcl/recognition/face_detection/face_common.h"
+ #include <pcl/ml/dt/decision_tree_data_provider.h>
+-#include <boost/filesystem/operations.hpp>
++#include <boost/filesystem.hpp>
+ #include <iostream>
+ #include <fstream>
+ #include <string>
 diff --git a/surface/CMakeLists.txt b/surface/CMakeLists.txt
 index 1111111..2222222 100644
 --- a/surface/CMakeLists.txt
@@ -112,7 +354,7 @@ diff --git a/segmentation/CMakeLists.txt b/segmentation/CMakeLists.txt
 index 1111111..2222222 100644
 --- a/segmentation/CMakeLists.txt
 +++ b/segmentation/CMakeLists.txt
-@@ -130,6 +130,9 @@ if(build)
+@@ -130,4 +130,7 @@ if(build)
      # Install include files
      PCL_ADD_INCLUDES("${SUBSYS_NAME}" "${SUBSYS_NAME}" ${incs})
      PCL_ADD_INCLUDES("${SUBSYS_NAME}" "${SUBSYS_NAME}/impl" ${impl_incs})
@@ -120,3 +362,27 @@ index 1111111..2222222 100644
 +      add_definitions(-Wa,-mbig-obj)
 +    endif(MINGW)
  endif(build)
+diff --git a/visualization/src/pcl_visualizer.cpp b/visualization/src/pcl_visualizer.cpp
+index 1111111..2222222 100644
+--- a/visualization/src/pcl_visualizer.cpp
++++ b/visualization/src/pcl_visualizer.cpp
+@@ -4773,7 +4773,7 @@ pcl::visualization::PCLVisualizer::getUniqueCameraFile (int argc, char **argv)
+ {
+   std::vector<int> p_file_indices;
+   boost::uuids::detail::sha1 sha1;
+-  unsigned int digest[5];
++  unsigned char digest[20];
+   const char *str;
+   std::ostringstream sstream;
+   bool valid = false;
+@@ -4801,7 +4801,9 @@ pcl::visualization::PCLVisualizer::getUniqueCameraFile (int argc, char **argv)
+     {
+       sha1.get_digest (digest);
+       sstream << ".";
+-      sstream << std::hex << digest[0] << digest[1] << digest[2] << digest[3] << digest[4];
++      sstream << std::hex;
++      for (std::size_t i = 0; i < sizeof (digest); ++i)
++        sstream << static_cast<unsigned int> (digest[i]);
+       sstream << ".cam";
+     }
+   }

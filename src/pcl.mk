@@ -30,8 +30,16 @@ define $(PKG)_BUILD
         CXXFLAGS="-D__FLOAT_H -DFLT_MAX=__FLT_MAX__ -DFLT_MIN=__FLT_MIN__ -DDBL_MAX=__DBL_MAX__ -DDBL_MIN=__DBL_MIN__ -DDBL_EPSILON=__DBL_EPSILON__" \
         '$(TARGET)-cmake' '$(SOURCE_DIR)' \
         -DCMAKE_RELEASE_POSTFIX='' \
+        -DBoost_ARCHITECTURE='$(if $(findstring x86_64,$(TARGET)),-x64,-x32)' \
         -DBoost_THREADAPI=win32 \
-        -DPCL_SHARED_LIBS=$(CMAKE_SHARED_BOOL) \
+        -DCMAKE_CXX_STANDARD=14 \
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+        -DPCL_BUILD_WITH_BOOST_DYNAMIC_LINKING_WIN32=$(if $(findstring shared,$(TARGET)),ON,OFF) \
+        $(if $(findstring shared,$(TARGET)),-DBoost_FILESYSTEM_LIBRARY_RELEASE='$(PREFIX)/$(TARGET)/lib/libboost_filesystem-mt$(if $(findstring x86_64,$(TARGET)),-x64,-x32).dll.a') \
+        $(if $(findstring shared,$(TARGET)),-DBoost_THREAD_LIBRARY_RELEASE='$(PREFIX)/$(TARGET)/lib/libboost_thread-mt$(if $(findstring x86_64,$(TARGET)),-x64,-x32).dll.a') \
+        $(if $(findstring shared,$(TARGET)),-DBoost_DATE_TIME_LIBRARY_RELEASE='$(PREFIX)/$(TARGET)/lib/libboost_date_time-mt$(if $(findstring x86_64,$(TARGET)),-x64,-x32).dll.a') \
+        $(if $(findstring shared,$(TARGET)),-DBoost_IOSTREAMS_LIBRARY_RELEASE='$(PREFIX)/$(TARGET)/lib/libboost_iostreams-mt$(if $(findstring x86_64,$(TARGET)),-x64,-x32).dll.a') \
+        -DPCL_SHARED_LIBS=OFF \
         -DBUILD_TESTS=OFF \
         -DBUILD_apps=OFF \
         -DBUILD_examples=OFF \
