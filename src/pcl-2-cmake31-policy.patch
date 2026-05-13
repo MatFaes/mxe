@@ -1,0 +1,61 @@
+This file is part of MXE. See LICENSE.md for licensing information.
+
+Contains ad hoc patches for cross building.
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: noreply <noreply@local>
+Date: Tue, 12 May 2026 00:00:00 +0000
+Subject: [PATCH] Fix cmake_policy CMP0074 PUSH/POP imbalance with CMake 3.31
+
+CMake >= 3.27 defaults CMP0074 to NEW, so the PUSH/SET OLD/POP
+workaround is no longer needed. CMake 3.31 now enforces PUSH/POP
+balance strictly and errors out on the mismatch introduced by
+pcl_report_not_found returning early via a macro return().
+
+diff --git a/PCLConfig.cmake.in b/PCLConfig.cmake.in
+--- a/PCLConfig.cmake.in
++++ b/PCLConfig.cmake.in
+@@ -12,14 +12,8 @@
+ #                                   www.pointclouds.org
+ #------------------------------------------------------------------------------------
+ 
+-if(POLICY CMP0074)
+-  # TODO: update *_ROOT variables to be PCL_*_ROOT or equivalent.
+-  # CMP0074 directly affects how Find* modules work and *_ROOT variables.  Since
+-  # this is a config file that will be consumed by parent projects with (likely)
+-  # NEW behavior, we need to push a policy stack.
+-  cmake_policy(PUSH)
+-  cmake_policy(SET CMP0074 OLD)
+-endif()
++# CMP0074 PUSH/POP removed: CMake >= 3.27 defaults CMP0074 to NEW;
++# the PUSH/POP pattern causes a push-without-pop error with CMake 3.31.
+ 
+ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/Modules")
+ 
+@@ -36,9 +30,6 @@
+   elseif(NOT PCL_FIND_QUIETLY)
+     message(WARNING ${_reason})
+   endif()
+-  if(POLICY CMP0074)
+-    cmake_policy(POP)
+-  endif()
+   return()
+ endmacro(pcl_report_not_found)
+ 
+@@ -475,9 +466,6 @@
+ unset(_PCL_TO_FIND_COMPONENTS)
+ 
+ if(NOT PCL_TO_FIND_COMPONENTS)
+-  if(POLICY CMP0074)
+-    cmake_policy(POP)
+-  endif()
+   return()
+ endif()
+ 
+@@ -656,6 +644,3 @@
+ find_package_handle_standard_args(PCL DEFAULT_MSG PCL_LIBRARIES PCL_INCLUDE_DIRS)
+ mark_as_advanced(PCL_LIBRARIES PCL_INCLUDE_DIRS PCL_LIBRARY_DIRS)
+ 
+-if(POLICY CMP0074)
+-  cmake_policy(POP)
+-endif()

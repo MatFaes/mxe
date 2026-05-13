@@ -1,0 +1,36 @@
+This file is part of MXE. See LICENSE.md for licensing information.
+
+Contains ad hoc patches for cross building.
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: MeshCleaner <noreply@local>
+Date: Tue, 13 May 2026 00:00:00 +0000
+Subject: [PATCH] Add missing boost/mpl/if.hpp includes for Boost 1.87+
+
+Boost 1.87 removed a transitive include of boost/mpl/if.hpp from
+boost/type_traits headers. CGAL 5.5 number_utils.h and Quotient.h
+both use boost::mpl::if_c<> without including boost/mpl/if.hpp
+directly, which broke compilation with Boost 1.87+.
+
+diff --git a/include/CGAL/number_utils.h b/include/CGAL/number_utils.h
+--- a/include/CGAL/number_utils.h
++++ b/include/CGAL/number_utils.h
+@@ -21,6 +21,7 @@
+ #include <CGAL/Algebraic_structure_traits.h>
+ #include <CGAL/Real_embeddable_traits.h>
+ #include <CGAL/Kernel/Same_uncertainty.h>
++#include <boost/mpl/if.hpp>
+ 
+ namespace CGAL {
+ CGAL_NTS_BEGIN_NAMESPACE
+diff --git a/include/CGAL/Quotient.h b/include/CGAL/Quotient.h
+--- a/include/CGAL/Quotient.h
++++ b/include/CGAL/Quotient.h
+@@ -32,6 +32,7 @@
+ #include <CGAL/Interval_nt.h>
+ #include <CGAL/Kernel/mpl.h>
+ 
++#include <boost/mpl/if.hpp>
+ #include <boost/operators.hpp>
+ #ifdef CGAL_USE_BOOST_MP
+ #include <boost/multiprecision/cpp_int.hpp>

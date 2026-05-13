@@ -1,0 +1,27 @@
+This file is part of MXE. See LICENSE.md for licensing information.
+
+Contains ad hoc patches for cross building.
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: MeshCleaner <noreply@local>
+Date: Tue, 12 May 2026 00:00:00 +0000
+Subject: [PATCH] Fix unqualified is_zero ADL failure with newer GCC
+
+CGAL::INTERN_INTERVAL_NT is not an inline namespace, so ADL on
+Interval_nt does not find INTERN_INTERVAL_NT::is_zero from the
+CGAL::Intersections::internal context. Qualify the call with CGAL::
+to use the generic is_zero template from number_utils.h, which
+dispatches via Algebraic_structure_traits and returns Uncertain<bool>.
+
+diff --git a/include/CGAL/Intersections_3/internal/Line_3_Line_3_intersection.h b/include/CGAL/Intersections_3/internal/Line_3_Line_3_intersection.h
+--- a/include/CGAL/Intersections_3/internal/Line_3_Line_3_intersection.h
++++ b/include/CGAL/Intersections_3/internal/Line_3_Line_3_intersection.h
+@@ -59,7 +59,7 @@
+   const Vector_3 v3v2 = cross_product(v3,v2);
+   const Vector_3 v1v2 = cross_product(v1,v2);
+   const FT sl = v1v2.squared_length();
+-  if(certainly(is_zero(sl)))
++  if(certainly(CGAL::is_zero(sl)))
+     return intersection_return<typename K::Intersect_3, typename K::Line_3, typename K::Line_3>();
+ 
+   const FT t = ((v3v2.x()*v1v2.x()) + (v3v2.y()*v1v2.y()) + (v3v2.z()*v1v2.z())) / sl;
